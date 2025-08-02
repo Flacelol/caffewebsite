@@ -401,14 +401,19 @@ body {
 @media screen and (max-width: 768px) {
     .about {
         min-height: auto;
-        padding: 60px 0;
+        padding: 60px 20px;
+    }
+    
+    .about-content {
+        padding: 0 10px;
     }
     
     .about-text {
         padding: 2rem;
         margin: 0 auto;
-        width: 95%;
-        max-width: 500px;
+        width: 90%;
+        max-width: none;
+        display: block;
     }
     
     .about-text h3 {
@@ -421,11 +426,20 @@ body {
 }
 
 @media screen and (max-width: 480px) {
+    .about {
+        padding: 40px 15px;
+    }
+    
+    .about-content {
+        padding: 0 5px;
+    }
+    
     .about-text {
         padding: 1.5rem;
         margin: 0 auto;
-        width: 95%;
-        max-width: 400px;
+        width: 85%;
+        max-width: none;
+        display: block;
     }
     
     .about .section-header h2 {
@@ -514,18 +528,23 @@ body {
 
 
 .about-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4rem;
-    align-items: center;
+    display: block;
+    width: 100%;
+    text-align: center;
 }
 
 .about-text {
     background: rgba(255, 255, 255, 0.95);
-    margin-left: 315px;
+    padding: 3rem;
     border-radius: 20px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    text-align: center;
+    max-width: 600px;
+    width: 90%;
+    margin: 0 auto;
+    display: block;
 }
 
 /* Only About section headers will be white */
