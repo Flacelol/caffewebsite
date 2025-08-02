@@ -288,6 +288,7 @@ body {
 }
 
 /* About Section - Fixed and Centered */
+/* About Section - White block under header */
 .about {
     padding: 80px 0;
     background: url('../images/close-up-roasted-coffee-beans (1).jpg');
@@ -296,8 +297,6 @@ body {
     background-repeat: no-repeat;
     position: relative;
     min-height: 100vh;
-    display: flex;
-    align-items: center;
 }
 
 .about::before {
@@ -307,18 +306,23 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.4); /* Dark overlay for better text readability */
+    background: rgba(0, 0, 0, 0.4);
     pointer-events: none;
 }
 
 .about .container {
     position: relative;
     z-index: 2;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    border: 1px green solid;
 }
 
 .about .section-header {
     text-align: center;
     margin-bottom: 3rem;
+    width: 100%;
 }
 
 .about .section-header h2 {
@@ -326,6 +330,7 @@ body {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
     font-size: 2.5rem;
     margin-bottom: 1rem;
+    border: 1px blue solid;
 }
 
 .about .section-header p {
@@ -335,11 +340,9 @@ body {
 }
 
 .about-content {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    max-width: 800px;
-    margin: 0 auto;
+    display: block;
+    width: 100%;
+    text-align: center;
 }
 
 .about-text {
@@ -351,7 +354,10 @@ body {
     backdrop-filter: blur(10px);
     text-align: center;
     max-width: 600px;
-    width: 100%;
+    width: 90%;
+    margin: 0 auto;
+    display: inline-block;
+    border: 1px red solid;
 }
 
 .about-text h3 {
@@ -515,7 +521,7 @@ body {
 
 .about-text {
     background: rgba(255, 255, 255, 0.95);
-    padding: 2.5rem;
+    margin-left: 315px;
     border-radius: 20px;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
