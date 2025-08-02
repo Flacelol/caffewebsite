@@ -624,7 +624,6 @@ body {
     color: #8B4513;
 }
 
-/* Gallery Section */
 .gallery {
     padding: 80px 0;
     background: #f8f8f8;
@@ -636,12 +635,12 @@ body {
     gap: 2rem;
 }
 
-/* Simple Gallery Styles */
 .gallery-item {
     position: relative;
     overflow: hidden;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    will-change: transform;
 }
 
 .gallery-item img {
@@ -649,6 +648,11 @@ body {
     height: 250px;
     object-fit: cover;
     display: block;
+    transition: transform 0.3s ease;
+}
+
+.gallery-item:hover img {
+    transform: scale(1.05);
 }
 
 .gallery-overlay {
@@ -660,11 +664,12 @@ body {
     color: white;
     padding: 15px;
     text-align: center;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
 }
 
-.gallery-overlay span {
-    font-weight: 500;
-    font-size: 1rem;
+.gallery-item:hover .gallery-overlay {
+    transform: translateY(0);
 }
 
 @media screen and (max-width: 768px) {
@@ -676,6 +681,11 @@ body {
     .gallery-item img {
         height: 200px;
     }
+}
+
+.gallery-overlay span {
+    font-weight: 500;
+    font-size: 1rem;
 }
 
 .gallery-overlay span {
@@ -1187,7 +1197,6 @@ html {
     color: #8B4513;
 }
 
-/* Gallery Section - Optimized */
 .gallery {
     padding: 80px 0;
     background: #f8f8f8;
@@ -1204,7 +1213,6 @@ html {
     overflow: hidden;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    /* Добавляем will-change для оптимизации */
     will-change: transform;
 }
 
@@ -1213,12 +1221,9 @@ html {
     height: 250px;
     object-fit: cover;
     display: block;
-    /* Оптимизация загрузки изображений */
-    loading: lazy;
     transition: transform 0.3s ease;
 }
 
-/* Убираем тяжелые эффекты при наведении */
 .gallery-item:hover img {
     transform: scale(1.05);
 }

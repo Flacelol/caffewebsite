@@ -152,3 +152,38 @@ window.addEventListener('scroll', () => {
         }
     }
 });
+
+// Оптимизация загрузки изображений в галерее
+document.addEventListener('DOMContentLoaded', function() {
+    const galleryImages = document.querySelectorAll('.gallery-item img[loading="lazy"]');
+    
+    // Intersection Observer для lazy loading
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.addEventListener('load', () => {
+                    img.classList.add('loaded');
+                });
+                observer.unobserve(img);
+            }
+        });
+    }, {
+        rootMargin: '50px'
+    });
+    
+    galleryImages.forEach(img => {
+        imageObserver.observe(img);
+    });
+    
+    // Предзагрузка изображений при hover
+    const galleryItems = document.querySelectorAll('.gallery-item');
+    galleryItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            const img = this.querySelector('img');
+            if (img && !img.complete) {
+                img.loading = 'eager';
+            }
+        });
+    });
+});
