@@ -44,15 +44,12 @@ const ApiClient = {
     // Локальная авторизация
     async login(username, password) {
         // Простая проверка без сервера
-        if (username === 'admin' && password === 'cafe2024') {
+        if (username === 'admin' && password === 'admin123') {
             const mockToken = btoa(JSON.stringify({
                 user: 'admin',
                 exp: Date.now() + 24 * 60 * 60 * 1000 // 24 часа
             }));
-            
-            TokenManager.save(mockToken);
-            currentUser = { username: 'admin' };
-            return { token: mockToken, user: currentUser };
+            return { token: mockToken, user: { username: 'admin', role: 'admin' } };
         } else {
             throw new Error('Неверные учетные данные');
         }
