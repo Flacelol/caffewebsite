@@ -267,16 +267,4 @@
 </body>
 </html>
 
-// Замените существующий код аутентификации на:
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from './firebase-config.js';
 
-async function handleLogin(email, password) {
-    try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        localStorage.setItem('authToken', await userCredential.user.getIdToken());
-        window.location.href = 'admin.html';
-    } catch (error) {
-        showError('Неверный логин или пароль');
-    }
-}

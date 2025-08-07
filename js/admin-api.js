@@ -511,7 +511,7 @@ function initializeDemoData() {
 }
 
 // Вызываем инициализацию при загрузке
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     initializeDemoData();
     // Проверяем авторизацию
     if (!checkAuth()) {
@@ -525,16 +525,20 @@ document.addEventListener('DOMContentLoaded', function() {
         // Отображаем информацию о пользователе
         const token = TokenManager.get();
         if (token) {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            currentUser = { username: payload.username, role: payload.role };
-            
-            const userInfo = document.getElementById('user-info');
-            if (userInfo) {
-                userInfo.textContent = `Добро пожаловать, ${currentUser.username}!`;
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                currentUser = { username: payload.user || payload.username, role: payload.role || 'admin' };
+                
+                const userElement = document.getElementById('currentUser');
+                if (userElement) {
+                    userElement.textContent = currentUser.username;
+                }
+            } catch (e) {
+                console.error('Ошибка парсинга токена:', e);
             }
         }
         
-        // Загружаем меню с сервера
+        // Загружаем меню
         await loadMenuData();
         
         // Назначаем глобальные функции
@@ -570,14 +574,3 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-## Ограничения localStorage:
-
-1. **Локальное хранение**: localStorage сохраняет данные только в браузере конкретного устройства
-2. **Нет синхронизации**: Изменения в админ-панели на одном телефоне не передаются на другие устройства
-3. **Изолированность**: Каждый браузер имеет свое собственное хранилище
-
-## Решения для синхронизации между устройствами:
-
-### Вариант 1: Firebase Realtime Database (Рекомендуется)
-
-Добавьте в <mcfile name="admin-api.js" path="c:\Users\Flace\.trae\cafe-website\js\admin-api.js"></mcfile>:
