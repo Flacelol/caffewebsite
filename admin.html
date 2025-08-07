@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель - Your Cafe</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 100px auto 50px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .admin-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #8B4513;
+        }
+        
+        .admin-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #8B4513;
+        }
+        
+        .btn {
+            background: #8B4513;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+        
+        .btn:hover {
+            background: #A0522D;
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .menu-list {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .menu-item-admin {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #eee;
+        }
+        
+        .item-details {
+            flex: 1;
+        }
+        
+        .item-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .item-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .item-price {
+            font-weight: 600;
+            color: #8B4513;
+        }
+        
+        .item-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .availability-toggle {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        
+        .availability-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .status-text {
+            margin-left: 10px;
+            font-weight: 600;
+        }
+        
+        .available {
+            color: #4CAF50;
+        }
+        
+        .unavailable {
+            color: #dc3545;
+        }
+        
+        .category-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab-btn {
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            background: #8B4513;
+            color: white;
+        }
+        
+        .category-content {
+            display: none;
+        }
+        
+        .category-content.active {
+            display: block;
+        }
+        
+        .admin-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f8ff;
+            border-radius: 8px;
+            border-left: 4px solid #8B4513;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .admin-info span {
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .admin-info strong {
+            color: #8B4513;
+        }
+        
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #8B4513;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-spinner"></div>
+        <p>Проверка доступа...</p>
+    </div>
+    
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>Your Cafe - Админ</h2>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">Вернуться на сайт</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1><i class="fas fa-cogs"></i> Админ-панель управления меню</h1>
+            <p>Управляйте меню вашего кафе: добавляйте, удаляйте позиции и отмечайте их наличие</p>
+            <div class="admin-info">
+                <span>Вы вошли как: <strong id="currentUser"></strong></span>
+                <button class="btn btn-danger" onclick="logout()" style="margin-left: 20px;">
+                    <i class="fas fa-sign-out-alt"></i> Выйти
+                </button>
+            </div>
+        </div>
+
+        <!-- Добавление нового товара -->
+        <div class="admin-section">
+            <h2><i class="fas fa-plus-circle"></i> Добавить новую позицию</h2>
+            <form id="addItemForm">
+                <div class="form-group">
+                    <label for="itemCategory">Категория:</label>
+                    <select id="itemCategory" required>
+                        <option value="coffee">Кофе</option>
+                        <option value="tea">Чай</option>
+                        <option value="pastries">Выпечка</option>
+                        <option value="cold">Холодные напитки</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="itemName">Название:</label>
+                    <input type="text" id="itemName" required>
+                </div>
+                <div class="form-group">
+                    <label for="itemDescription">Описание:</label>
+                    <textarea id="itemDescription" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="itemPrice">Цена ($):</label>
+                    <input type="number" id="itemPrice" step="0.01" min="0" required>
+                </div>
+                <button type="submit" class="btn">
+                    <i class="fas fa-plus"></i> Добавить позицию
+                </button>
+            </form>
+        </div>
+
+        <!-- Управление существующими позициями -->
+        <div class="admin-section">
+            <h2><i class="fas fa-list"></i> Управление меню</h2>
+            
+            <div class="category-tabs">
+                <button class="tab-btn active" data-category="coffee">Кофе</button>
+                <button class="tab-btn" data-category="tea">Чай</button>
+                <button class="tab-btn" data-category="pastries">Выпечка</button>
+                <button class="tab-btn" data-category="cold">Холодные напитки</button>
+            </div>
+
+            <div id="coffee" class="category-content active">
+                <div class="menu-list" id="coffeeList"></div>
+            </div>
+            <div id="tea" class="category-content">
+                <div class="menu-list" id="teaList"></div>
+            </div>
+            <div id="pastries" class="category-content">
+                <div class="menu-list" id="pastriesList"></div>
+            </div>
+            <div id="cold" class="category-content">
+                <div class="menu-list" id="coldList"></div>
+            </div>
+        </div>
+
+        <!-- Экспорт/Импорт данных -->
+        <div class="admin-section">
+            <h2><i class="fas fa-download"></i> Управление данными</h2>
+            <button class="btn" onclick="exportMenu()">
+                <i class="fas fa-download"></i> Экспортировать меню
+            </button>
+            <button class="btn" onclick="updateMainSite()">
+                <i class="fas fa-sync"></i> Обновить основной сайт
+            </button>
+        </div>
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>

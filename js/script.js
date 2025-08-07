@@ -85,6 +85,50 @@ contactForm.addEventListener('submit', (e) => {
     contactForm.reset();
 });
 
+// Загрузка меню из админ-панели
+function loadDynamicMenu() {
+    const savedMenuData = localStorage.getItem('cafeMenuData');
+    if (savedMenuData) {
+        const menuData = JSON.parse(savedMenuData);
+        updateMenuDisplay(menuData);
+    }
+}
+
+// Обновление отображения меню
+function updateMenuDisplay(menuData) {
+    Object.keys(menuData).forEach(category => {
+        const container = document.getElementById(category);
+        if (container) {
+            // Очищаем контейнер
+            container.innerHTML = '';
+            
+            // Добавляем только доступные позиции
+            menuData[category].forEach(item => {
+                if (item.available) {
+                    const menuItem = document.createElement('div');
+                    menuItem.className = 'menu-item';
+                    menuItem.innerHTML = `
+                        <div class="item-info">
+                            <h4>${item.name}</h4>
+                            <p>${item.description}</p>
+                        </div>
+                        <span class="price">$${item.price.toFixed(2)}</span>
+                    `;
+                    container.appendChild(menuItem);
+                }
+            });
+            
+            // Если нет доступных позиций, показываем сообщение
+            if (container.children.length === 0) {
+                const noItemsMsg = document.createElement('div');
+                noItemsMsg.className = 'no-items-message';
+                noItemsMsg.innerHTML = '<p style="text-align: center; color: #666; font-style: italic;">В данной категории пока нет доступных позиций</p>';
+                container.appendChild(noItemsMsg);
+            }
+        }
+    });
+}
+
 // Intersection Observer for animations
 const observerOptions = {
     threshold: 0.1,
@@ -155,6 +199,16 @@ window.addEventListener('scroll', () => {
 
 // Оптимизация загрузки изображений в галерее
 document.addEventListener('DOMContentLoaded', function() {
+    // Загружаем динамическое меню из админ-панели
+    loadDynamicMenu();
+    
+    // Добавляем обработчик для обновления меню при изменении localStorage
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'cafeMenuData') {
+            loadDynamicMenu();
+        }
+    });
+    
     const galleryImages = document.querySelectorAll('.gallery-item img[loading="lazy"]');
     
     // Intersection Observer для lazy loading
@@ -186,4 +240,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    console.log('Cafe website loaded successfully!');
 });
