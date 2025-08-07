@@ -59,19 +59,22 @@ const ApiClient = {
     // Загрузка меню из localStorage
     async getMenu() {
         try {
-            const menuRef = ref(database, 'menu');
-            const snapshot = await get(menuRef);
-            return snapshot.exists() ? snapshot.val() : {
+            // Убираем Firebase код, используем только localStorage
+            const savedMenu = localStorage.getItem('cafeMenuData');
+            return savedMenu ? JSON.parse(savedMenu) : {
                 Coffee: [],
                 Tea: [],
                 Pastries: [],
                 'Cold Drinks': []
             };
         } catch (error) {
-            console.error('Ошибка загрузки из Firebase:', error);
-            // Fallback к localStorage
-            const savedMenu = localStorage.getItem('cafeMenuData');
-            return savedMenu ? JSON.parse(savedMenu) : {};
+            console.error('Ошибка загрузки меню:', error);
+            return {
+                Coffee: [],
+                Tea: [],
+                Pastries: [],
+                'Cold Drinks': []
+            };
         }
     },
 
@@ -498,17 +501,33 @@ document.addEventListener('DOMContentLoaded', async function() {
         const token = TokenManager.get();
         if (token) {
             try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                currentUser = { username: payload.user || payload.username, role: payload.role || 'admin' };
-                
-                const userElement = document.getElementById('currentUser');
-                if (userElement) {
-                    userElement.textContent = currentUser.username;
+                // Отображаем информацию о пользователе
+                const token = TokenManager.get();
+                if (token) {
+                    try {
+                        // Проверяем, является ли токен JWT (содержит точки)
+                        if (token.includes('.')) {
+                            const payload = JSON.parse(atob(token.split('.')[1]));
+                            currentUser = { username: payload.user || payload.username, role: payload.role || 'admin' };
+                        } else {
+                            // Простой токен
+                            currentUser = { username: 'admin', role: 'admin' };
+                        }
+                        
+                        const userElement = document.getElementById('currentUser');
+                        if (userElement) {
+                            userElement.textContent = currentUser.username;
+                        }
+                    } catch (e) {
+                        console.error('Ошибка парсинга токена:', e);
+                        // Fallback для простого токена
+                        currentUser = { username: 'admin', role: 'admin' };
+                        const userElement = document.getElementById('currentUser');
+                        if (userElement) {
+                            userElement.textContent = 'admin';
+                        }
+                    }
                 }
-            } catch (e) {
-                console.error('Ошибка парсинга токена:', e);
-            }
-        }
         
         // Загружаем меню
         await loadMenuData();
