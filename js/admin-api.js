@@ -376,26 +376,39 @@ function logout() {
 }
 
 // Переключение вкладок
+// Заменить функцию switchTab (строки 378-398)
 function switchTab(category) {
     // Убираем активный класс со всех вкладок
-    document.querySelectorAll('.tab-button').forEach(tab => {
+    document.querySelectorAll('.tab-btn').forEach(tab => {
         tab.classList.remove('active');
     });
     
     // Добавляем активный класс к выбранной вкладке
-    event.target.classList.add('active');
+    document.querySelector(`[data-category="${category}"]`).classList.add('active');
     
     // Скрываем все панели
-    document.querySelectorAll('.tab-panel').forEach(panel => {
+    document.querySelectorAll('.category-content').forEach(panel => {
         panel.classList.remove('active');
     });
     
     // Показываем выбранную панель
-    const targetPanel = document.getElementById(`${category.toLowerCase().replace(' ', '-')}-panel`);
+    const targetPanel = document.getElementById(category);
     if (targetPanel) {
         targetPanel.classList.add('active');
     }
+    
+    // Перерендерим меню для выбранной категории
+    renderMenu();
 }
+
+// Добавить в конец DOMContentLoaded функции (после строки 508):
+// Добавляем обработчики событий для кнопок категорий
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const category = btn.getAttribute('data-category');
+        switchTab(category);
+    });
+});
 
 // Функция для скрытия экрана загрузки
 function hideLoadingScreen() {
