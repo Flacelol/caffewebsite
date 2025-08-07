@@ -11,25 +11,26 @@ let menuData = {};
 const TokenManager = {
     save(token) {
         localStorage.setItem('authToken', token);
-        authToken = token;
     },
     
     get() {
-        if (!authToken) {
-            authToken = localStorage.getItem('authToken');
-        }
-        return authToken;
+        return localStorage.getItem('authToken');
     },
     
     remove() {
         localStorage.removeItem('authToken');
-        authToken = null;
     },
     
     isValid() {
         const token = this.get();
         if (!token) return false;
         
+        // Поддержка простого токена из login.html
+        if (token === 'admin-logged-in') {
+            return true;
+        }
+        
+        // Поддержка JWT токенов
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             return payload.exp > Date.now();
