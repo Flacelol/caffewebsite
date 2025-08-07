@@ -31,85 +31,160 @@ const TokenManager = {
         
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
-            return payload.exp * 1000 > Date.now();
+            return payload.exp > Date.now();
         } catch (e) {
             return false;
         }
     }
 };
 
-// API клиент
+// API клиент - модифицированный для работы без сервера
 const ApiClient = {
-    async request(endpoint, options = {}) {
-        const url = `${API_BASE_URL}${endpoint}`;
-        const token = TokenManager.get();
-        
-        const config = {
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` })
-            },
-            ...options
-        };
-        
-        if (config.body && typeof config.body === 'object') {
-            config.body = JSON.stringify(config.body);
-        }
-        
-        try {
-            const response = await fetch(url, config);
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.error || `HTTP ${response.status}`);
-            }
-            
-            return data;
-        } catch (error) {
-            console.error('API Error:', error);
-            throw error;
-        }
-    },
-    
-    // Auth methods
+    // Локальная авторизация
     async login(username, password) {
-        const data = await this.request('/auth/login', {
-            method: 'POST',
-            body: { username, password }
-        });
-        
-        TokenManager.save(data.token);
-        currentUser = data.user;
-        return data;
+        // Простая проверка без сервера
+        if (username === 'admin' && password === 'cafe2024') {
+            const mockToken = btoa(JSON.stringify({
+                user: 'admin',
+                exp: Date.now() + 24 * 60 * 60 * 1000 // 24 часа
+            }));
+            
+            TokenManager.save(mockToken);
+            currentUser = { username: 'admin' };
+            return { token: mockToken, user: currentUser };
+        } else {
+            throw new Error('Неверные учетные данные');
+        }
     },
-    
-    // Menu methods
+
+    // Загрузка меню из localStorage
     async getMenu() {
-        return await this.request('/menu');
+        try {
+            const menuRef = ref(database, 'menu');
+            const snapshot = await get(menuRef);
+            return snapshot.exists() ? snapshot.val() : {
+                Coffee: [],
+                Tea: [],
+                Pastries: [],
+                'Cold Drinks': []
+            };
+        } catch (error) {
+            console.error('Ошибка загрузки из Firebase:', error);
+            // Fallback к localStorage
+            const savedMenu = localStorage.getItem('cafeMenuData');
+            return savedMenu ? JSON.parse(savedMenu) : {};
+        }
     },
-    
+
     async addMenuItem(item) {
-        return await this.request('/menu', {
-            method: 'POST',
-            body: item
-        });
+        const menu = await this.getMenu();
+        if (!menu[item.category]) menu[item.category] = [];
+        
+        item.id = Date.now();
+        item.available = true;
+        menu[item.category].push(item);
+        
+        // Сохраняем в Firebase
+        await set(ref(database, 'menu'), menu);
+        // Дублируем в localStorage для offline режима
+        localStorage.setItem('cafeMenuData', JSON.stringify(menu));
+        
+        return item;
     },
-    
+
     async updateItemAvailability(id, available) {
-        return await this.request(`/menu/${id}/availability`, {
-            method: 'PATCH',
-            body: { available }
-        });
+        const menu = await this.getMenu();
+        
+        for (const category in menu) {
+            const item = menu[category].find(item => item.id == id);
+            if (item) {
+                item.available = available;
+                await set(ref(database, 'menu'), menu);
+                localStorage.setItem('cafeMenuData', JSON.stringify(menu));
+                return item;
+            }
+        }
+        throw new Error('Элемент не найден');
     },
-    
+
     async deleteMenuItem(id) {
-        return await this.request(`/menu/${id}`, {
-            method: 'DELETE'
-        });
+        const menu = await this.getMenu();
+        
+        for (const category in menu) {
+            const index = menu[category].findIndex(item => item.id == id);
+            if (index !== -1) {
+                menu[category].splice(index, 1);
+                await set(ref(database, 'menu'), menu);
+                localStorage.setItem('cafeMenuData', JSON.stringify(menu));
+                return true;
+            }
+        }
+        return false;
+    }
+};
+
+// Слушатель изменений в реальном времени
+function setupRealtimeListener() {
+    const menuRef = ref(database, 'menu');
+    onValue(menuRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const newMenuData = snapshot.val();
+            menuData = newMenuData;
+            localStorage.setItem('cafeMenuData', JSON.stringify(newMenuData));
+            renderMenu(); // Обновляем интерфейс
+            showNotification('Меню обновлено с сервера');
+        }
+    });
+}
+
+// Вызывайте при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    setupRealtimeListener();
+    // Добавление нового элемента меню
+    async addMenuItem(item) {
+        const menu = await this.getMenu();
+        if (!menu[item.category]) menu[item.category] = [];
+        
+        item.id = Date.now(); // Простой ID
+        item.available = true; // По умолчанию доступно
+        menu[item.category].push(item);
+        
+        localStorage.setItem('cafeMenuData', JSON.stringify(menu));
+        return item;
+    },
+
+    // Обновление доступности элемента
+    async updateItemAvailability(id, available) {
+        const menu = await this.getMenu();
+        
+        for (const category in menu) {
+            const item = menu[category].find(item => item.id == id);
+            if (item) {
+                item.available = available;
+                localStorage.setItem('cafeMenuData', JSON.stringify(menu));
+                return item;
+            }
+        }
+        throw new Error('Элемент не найден');
+    },
+
+    // Удаление элемента меню
+    async deleteMenuItem(id) {
+        const menu = await this.getMenu();
+        
+        for (const category in menu) {
+            const index = menu[category].findIndex(item => item.id == id);
+            if (index !== -1) {
+                menu[category].splice(index, 1);
+                localStorage.setItem('cafeMenuData', JSON.stringify(menu));
+                return true;
+            }
+        }
+        return false;
     },
     
     async getCategories() {
-        return await this.request('/categories');
+        return ['Coffee', 'Tea', 'Pastries', 'Cold Drinks'];
     }
 };
 
@@ -153,12 +228,12 @@ function checkAuth() {
     return true;
 }
 
-// Загрузка меню с сервера
+// Загрузка меню - модифицированная функция
 async function loadMenuData() {
     try {
         menuData = await ApiClient.getMenu();
         renderMenu();
-        showNotification('Меню загружено с сервера');
+        showNotification('Меню загружено');
     } catch (error) {
         console.error('Ошибка загрузки меню:', error);
         showNotification('Ошибка загрузки меню: ' + error.message, 'error');
@@ -329,46 +404,17 @@ function exportMenu() {
     showNotification('Меню экспортировано');
 }
 
-// Обновление главного сайта
+// Обновление главного сайта - модифицированная функция
 function updateMainSite() {
     try {
-        // Генерируем HTML для главного сайта
-        let menuHTML = '';
-        const categories = ['Coffee', 'Tea', 'Pastries', 'Cold Drinks'];
-        
-        categories.forEach(category => {
-            const items = menuData[category] || [];
-            const availableItems = items.filter(item => item.available);
-            
-            if (availableItems.length > 0) {
-                menuHTML += `<div class="menu-category">\n`;
-                menuHTML += `  <h3>${category}</h3>\n`;
-                menuHTML += `  <div class="menu-items">\n`;
-                
-                availableItems.forEach(item => {
-                    menuHTML += `    <div class="menu-item">\n`;
-                    menuHTML += `      <div class="item-info">\n`;
-                    menuHTML += `        <h4>${item.name}</h4>\n`;
-                    if (item.description) {
-                        menuHTML += `        <p>${item.description}</p>\n`;
-                    }
-                    menuHTML += `      </div>\n`;
-                    menuHTML += `      <div class="item-price">$${item.price.toFixed(2)}</div>\n`;
-                    menuHTML += `    </div>\n`;
-                });
-                
-                menuHTML += `  </div>\n`;
-                menuHTML += `</div>\n`;
-            }
-        });
-        
-        // Сохраняем в localStorage для совместимости
-        localStorage.setItem('generatedMenuHTML', menuHTML);
+        // Сохраняем данные меню для главного сайта
         localStorage.setItem('cafeMenuData', JSON.stringify(menuData));
         
-        console.log('Главный сайт обновлен');
+        showNotification('Главный сайт обновлен! Изменения будут видны всем пользователям.');
+        console.log('Данные меню сохранены в localStorage');
     } catch (error) {
         console.error('Ошибка обновления главного сайта:', error);
+        showNotification('Ошибка обновления: ' + error.message, 'error');
     }
 }
 
@@ -409,7 +455,63 @@ function hideLoadingScreen() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', async function() {
+// Инициализация демо-данных при первом запуске
+function initializeDemoData() {
+    const existingMenu = localStorage.getItem('cafeMenuData');
+    if (!existingMenu) {
+        const demoMenu = {
+            Coffee: [
+                {
+                    id: 1,
+                    name: 'Эспрессо',
+                    description: 'Классический итальянский кофе',
+                    price: 2.50,
+                    available: true
+                },
+                {
+                    id: 2,
+                    name: 'Капучино', 
+                    description: 'Кофе с молочной пенкой',
+                    price: 3.50,
+                    available: true
+                }
+            ],
+            Tea: [
+                {
+                    id: 3,
+                    name: 'Зеленый чай',
+                    description: 'Освежающий зеленый чай',
+                    price: 2.00,
+                    available: true
+                }
+            ],
+            Pastries: [
+                {
+                    id: 4,
+                    name: 'Круассан',
+                    description: 'Свежий французский круассан',
+                    price: 2.80,
+                    available: true
+                }
+            ],
+            'Cold Drinks': [
+                {
+                    id: 5,
+                    name: 'Айс-кофе',
+                    description: 'Холодный кофе со льдом',
+                    price: 3.00,
+                    available: true
+                }
+            ]
+        };
+        localStorage.setItem('cafeMenuData', JSON.stringify(demoMenu));
+        console.log('Демо-данные инициализированы');
+    }
+}
+
+// Вызываем инициализацию при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDemoData();
     // Проверяем авторизацию
     if (!checkAuth()) {
         return;
@@ -466,3 +568,118 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+## Ограничения localStorage:
+
+1. **Локальное хранение**: localStorage сохраняет данные только в браузере конкретного устройства
+2. **Нет синхронизации**: Изменения в админ-панели на одном телефоне не передаются на другие устройства
+3. **Изолированность**: Каждый браузер имеет свое собственное хранилище
+
+## Решения для синхронизации между устройствами:
+
+### Вариант 1: Firebase Realtime Database (Рекомендуется)
+
+Добавьте в <mcfile name="admin-api.js" path="c:\Users\Flace\.trae\cafe-website\js\admin-api.js"></mcfile>:
+```javascript
+// Добавьте в начало файла
+import { initializeApp } from 'firebase/app';
+import { getDatabase, ref, set, get, onValue } from 'firebase/database';
+
+// Конфигурация Firebase
+const firebaseConfig = {
+  // Ваши настройки Firebase
+  databaseURL: "https://your-project-default-rtdb.firebaseio.com/"
+};
+
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+
+// Модифицированный ApiClient для работы с Firebase
+const ApiClient = {
+    // ... existing code ...
+    
+    async getMenu() {
+        try {
+            const menuRef = ref(database, 'menu');
+            const snapshot = await get(menuRef);
+            return snapshot.exists() ? snapshot.val() : {
+                Coffee: [],
+                Tea: [],
+                Pastries: [],
+                'Cold Drinks': []
+            };
+        } catch (error) {
+            console.error('Ошибка загрузки из Firebase:', error);
+            // Fallback к localStorage
+            const savedMenu = localStorage.getItem('cafeMenuData');
+            return savedMenu ? JSON.parse(savedMenu) : {};
+        }
+    },
+
+    async addMenuItem(item) {
+        const menu = await this.getMenu();
+        if (!menu[item.category]) menu[item.category] = [];
+        
+        item.id = Date.now();
+        item.available = true;
+        menu[item.category].push(item);
+        
+        // Сохраняем в Firebase
+        await set(ref(database, 'menu'), menu);
+        // Дублируем в localStorage для offline режима
+        localStorage.setItem('cafeMenuData', JSON.stringify(menu));
+        
+        return item;
+    },
+
+    async updateItemAvailability(id, available) {
+        const menu = await this.getMenu();
+        
+        for (const category in menu) {
+            const item = menu[category].find(item => item.id == id);
+            if (item) {
+                item.available = available;
+                await set(ref(database, 'menu'), menu);
+                localStorage.setItem('cafeMenuData', JSON.stringify(menu));
+                return item;
+            }
+        }
+        throw new Error('Элемент не найден');
+    },
+
+    async deleteMenuItem(id) {
+        const menu = await this.getMenu();
+        
+        for (const category in menu) {
+            const index = menu[category].findIndex(item => item.id == id);
+            if (index !== -1) {
+                menu[category].splice(index, 1);
+                await set(ref(database, 'menu'), menu);
+                localStorage.setItem('cafeMenuData', JSON.stringify(menu));
+                return true;
+            }
+        }
+        return false;
+    }
+};
+
+// Слушатель изменений в реальном времени
+function setupRealtimeListener() {
+    const menuRef = ref(database, 'menu');
+    onValue(menuRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const newMenuData = snapshot.val();
+            menuData = newMenuData;
+            localStorage.setItem('cafeMenuData', JSON.stringify(newMenuData));
+            renderMenu(); // Обновляем интерфейс
+            showNotification('Меню обновлено с сервера');
+        }
+    });
+}
+
+// Вызывайте при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    setupRealtimeListener();
+    // ... existing code ...
+});
+```

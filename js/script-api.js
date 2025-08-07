@@ -1,39 +1,65 @@
-// Конфигурация API
-const API_BASE_URL = 'http://localhost:3001/api';
+// Конфигурация API - отключаем сервер
+const API_BASE_URL = null;
 
-// API клиент для главного сайта
+// API клиент для главного сайта - модифицированный
 const ApiClient = {
-    async request(endpoint, options = {}) {
-        const url = `${API_BASE_URL}${endpoint}`;
-        
-        const config = {
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            ...options
-        };
-        
-        try {
-            const response = await fetch(url, config);
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.error || `HTTP ${response.status}`);
-            }
-            
-            return data;
-        } catch (error) {
-            console.error('API Error:', error);
-            throw error;
-        }
-    },
-    
     async getMenu() {
-        return await this.request('/menu');
+        // Загружаем из localStorage
+        const savedMenu = localStorage.getItem('cafeMenuData');
+        if (savedMenu) {
+            return JSON.parse(savedMenu);
+        }
+        
+        // Возвращаем демо-меню если нет сохраненных данных
+        return {
+            Coffee: [
+                {
+                    id: 1,
+                    name: 'Эспрессо',
+                    description: 'Классический итальянский кофе',
+                    price: 2.50,
+                    available: true
+                },
+                {
+                    id: 2,
+                    name: 'Капучино',
+                    description: 'Кофе с молочной пенкой',
+                    price: 3.50,
+                    available: true
+                }
+            ],
+            Tea: [
+                {
+                    id: 3,
+                    name: 'Зеленый чай',
+                    description: 'Освежающий зеленый чай',
+                    price: 2.00,
+                    available: true
+                }
+            ],
+            Pastries: [
+                {
+                    id: 4,
+                    name: 'Круассан',
+                    description: 'Свежий французский круассан',
+                    price: 2.80,
+                    available: true
+                }
+            ],
+            'Cold Drinks': [
+                {
+                    id: 5,
+                    name: 'Айс-кофе',
+                    description: 'Холодный кофе со льдом',
+                    price: 3.00,
+                    available: true
+                }
+            ]
+        };
     }
 };
 
-// Загрузка и отображение меню
+// Загрузка и отображение меню - упрощенная функция
 async function loadAndDisplayMenu() {
     try {
         // Показываем индикатор загрузки
@@ -42,24 +68,16 @@ async function loadAndDisplayMenu() {
             menuContainer.innerHTML = '<div class="loading">Загрузка меню...</div>';
         }
         
-        // Загружаем меню с API
+        // Загружаем меню из localStorage
         const menuData = await ApiClient.getMenu();
         
         // Отображаем меню
         displayMenu(menuData);
         
-        console.log('Меню загружено с сервера');
+        console.log('Меню загружено из localStorage');
     } catch (error) {
         console.error('Ошибка загрузки меню:', error);
-        
-        // Пытаемся загрузить из localStorage как fallback
-        const fallbackMenu = loadMenuFromLocalStorage();
-        if (fallbackMenu) {
-            displayMenu(fallbackMenu);
-            console.log('Меню загружено из локального хранилища (fallback)');
-        } else {
-            displayErrorMessage();
-        }
+        displayErrorMessage();
     }
 }
 
