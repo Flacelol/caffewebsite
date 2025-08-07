@@ -192,15 +192,25 @@ async function loadMenuData() {
 
 // Отображение меню
 function renderMenu() {
-    const categories = ['Coffee', 'Tea', 'Pastries', 'Cold Drinks'];
+    const categories = {
+        'Coffee': 'coffeeList',
+        'Tea': 'teaList', 
+        'Pastries': 'pastriesList',
+        'Cold Drinks': 'coldList'
+    };
     
-    categories.forEach(category => {
-        const container = document.getElementById(`${category.toLowerCase().replace(' ', '-')}-items`);
-        if (!container) return;
+    Object.keys(categories).forEach(category => {
+        const containerId = categories[category];
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.warn(`Контейнер ${containerId} не найден`);
+            return;
+        }
         
         container.innerHTML = '';
         
         const items = menuData[category] || [];
+        console.log(`Отображение ${items.length} товаров в категории ${category}`);
         items.forEach(item => {
             const itemElement = createMenuItemElement(item, category);
             container.appendChild(itemElement);
