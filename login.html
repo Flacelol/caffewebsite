@@ -192,9 +192,64 @@
     </div>
     
     <script>
-        // Конфигурация API
-        const API_BASE_URL = 'http://localhost:3001/api';
+        // Простая аутентификация без сервера
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+    
+        // Проверка аутентификации при загрузке
+        function checkAuth() {
+            const token = localStorage.getItem('authToken');
+            if (token === 'admin-logged-in') {
+                window.location.href = 'admin.html';
+            }
+        }
+    
+        // Обработка формы входа
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            
+            // Блокировка кнопки
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Проверка...';
+            
+            // Простая проверка логина и пароля
+            if (username === 'admin' && password === 'admin123') {
+                // Успешная аутентификация
+                localStorage.setItem('authToken', 'admin-logged-in');
+                window.location.href = 'admin.html';
+            } else {
+                // Ошибка аутентификации
+                showError('Неверный логин или пароль');
+                
+                // Разблокировка кнопки
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Войти';
+                
+                // Очистка полей
+                document.getElementById('password').value = '';
+            }
+        });
+    
+        // Проверка при загрузке страницы
+        document.addEventListener('DOMContentLoaded', checkAuth);
         
+        // Автофокус на поле логина
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('username').focus();
+        });
+    
         // Переключение видимости пароля
         function togglePassword() {
             const passwordInput = document.getElementById('password');
@@ -208,96 +263,20 @@
                 eyeIcon.className = 'fas fa-eye';
             }
         }
-        
-        // Показ ошибки
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            const errorText = document.getElementById('errorText');
-            errorText.textContent = message;
-            errorDiv.style.display = 'block';
-            
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 5000);
-        }
-        
-        // Проверка аутентификации при загрузке
-        function checkAuth() {
-            const token = localStorage.getItem('authToken');
-            if (token) {
-                try {
-                    const payload = JSON.parse(atob(token.split('.')[1]));
-                    if (payload.exp * 1000 > Date.now()) {
-                        window.location.href = 'admin.html';
-                    } else {
-                        localStorage.removeItem('authToken');
-                    }
-                } catch (e) {
-                    localStorage.removeItem('authToken');
-                }
-            }
-        }
-        
-        // Обработка формы входа
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const loginBtn = document.getElementById('loginBtn');
-            
-            // Блокировка кнопки
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Проверка...';
-            
-            try {
-                const response = await fetch(`${API_BASE_URL}/auth/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ username, password })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Успешная аутентификация
-                    localStorage.setItem('authToken', data.token);
-                    
-                    // Перенаправление на админ-панель
-                    window.location.href = 'admin.html';
-                } else {
-                    // Ошибка аутентификации
-                    showError(data.error || 'Ошибка входа');
-                    
-                    // Разблокировка кнопки
-                    loginBtn.disabled = false;
-                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Войти';
-                    
-                    // Очистка полей
-                    document.getElementById('password').value = '';
-                }
-            } catch (error) {
-                console.error('Ошибка входа:', error);
-                showError('Ошибка подключения к серверу');
-                
-                // Разблокировка кнопки
-                loginBtn.disabled = false;
-                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Войти';
-                
-                // Очистка полей
-                document.getElementById('password').value = '';
-            }
-        });
-        
-        // Проверка при загрузке страницы
-        document.addEventListener('DOMContentLoaded', checkAuth);
-        
-        // Автофокус на поле логина
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('username').focus();
-        });
     </script>
 </body>
 </html>
+
+// Замените существующий код аутентификации на:
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from './firebase-config.js';
+
+async function handleLogin(email, password) {
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        localStorage.setItem('authToken', await userCredential.user.getIdToken());
+        window.location.href = 'admin.html';
+    } catch (error) {
+        showError('Неверный логин или пароль');
+    }
+}
