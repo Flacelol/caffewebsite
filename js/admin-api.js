@@ -123,64 +123,16 @@ const ApiClient = {
 
 // Слушатель изменений в реальном времени
 function setupRealtimeListener() {
-    const menuRef = ref(database, 'menu');
-    onValue(menuRef, (snapshot) => {
-        if (snapshot.exists()) {
-            const newMenuData = snapshot.val();
-            menuData = newMenuData;
-            localStorage.setItem('cafeMenuData', JSON.stringify(newMenuData));
-            renderMenu(); // Обновляем интерфейс
-            showNotification('Меню обновлено с сервера');
-        }
-    });
+    // Пока что пустая функция, так как Firebase не используется
+    console.log('Realtime listener setup (placeholder)');
 }
 
 // Вызывайте при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     setupRealtimeListener();
-    // Добавление нового элемента меню
-    async addMenuItem(item) {
-        const menu = await this.getMenu();
-        if (!menu[item.category]) menu[item.category] = [];
-        
-        item.id = Date.now(); // Простой ID
-        item.available = true; // По умолчанию доступно
-        menu[item.category].push(item);
-        
-        localStorage.setItem('cafeMenuData', JSON.stringify(menu));
-        return item;
-    },
+});
 
-    // Обновление доступности элемента
-    async updateItemAvailability(id, available) {
-        const menu = await this.getMenu();
-        
-        for (const category in menu) {
-            const item = menu[category].find(item => item.id == id);
-            if (item) {
-                item.available = available;
-                localStorage.setItem('cafeMenuData', JSON.stringify(menu));
-                return item;
-            }
-        }
-        throw new Error('Элемент не найден');
-    },
 
-    // Удаление элемента меню
-    async deleteMenuItem(id) {
-        const menu = await this.getMenu();
-        
-        for (const category in menu) {
-            const index = menu[category].findIndex(item => item.id == id);
-            if (index !== -1) {
-                menu[category].splice(index, 1);
-                localStorage.setItem('cafeMenuData', JSON.stringify(menu));
-                return true;
-            }
-        }
-        return false;
-    },
-    
     async getCategories() {
         return ['Coffee', 'Tea', 'Pastries', 'Cold Drinks'];
     }
@@ -507,7 +459,7 @@ function initializeDemoData() {
     }
 }
 
-// Вызываем инициализацию при загрузке
+// Оставьте только один DOMContentLoaded обработчик (строки 511-557)
 document.addEventListener('DOMContentLoaded', async function() {
     initializeDemoData();
     // Проверяем авторизацию
