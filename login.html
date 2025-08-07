@@ -192,11 +192,8 @@
     </div>
     
     <script>
-        // Данные для входа (в реальном проекте должны храниться на сервере)
-        const adminCredentials = {
-            'admin': 'cafe2024',
-            'manager': 'menu123'
-        };
+        // Конфигурация API
+        const API_BASE_URL = 'http://localhost:3001/api';
         
         // Переключение видимости пароля
         function togglePassword() {
@@ -226,18 +223,23 @@
         
         // Проверка аутентификации при загрузке
         function checkAuth() {
-            const isAuthenticated = sessionStorage.getItem('adminAuthenticated');
-            const authTime = sessionStorage.getItem('authTime');
-            const currentTime = new Date().getTime();
-            
-            // Сессия действительна 24 часа
-            if (isAuthenticated && authTime && (currentTime - authTime < 24 * 60 * 60 * 1000)) {
-                window.location.href = 'admin.html';
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    if (payload.exp * 1000 > Date.now()) {
+                        window.location.href = 'admin.html';
+                    } else {
+                        localStorage.removeItem('authToken');
+                    }
+                } catch (e) {
+                    localStorage.removeItem('authToken');
+                }
             }
         }
         
         // Обработка формы входа
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const username = document.getElementById('username').value;
@@ -248,19 +250,26 @@
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Проверка...';
             
-            // Имитация задержки проверки
-            setTimeout(() => {
-                if (adminCredentials[username] && adminCredentials[username] === password) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
                     // Успешная аутентификация
-                    sessionStorage.setItem('adminAuthenticated', 'true');
-                    sessionStorage.setItem('authTime', new Date().getTime().toString());
-                    sessionStorage.setItem('adminUsername', username);
+                    localStorage.setItem('authToken', data.token);
                     
                     // Перенаправление на админ-панель
                     window.location.href = 'admin.html';
                 } else {
                     // Ошибка аутентификации
-                    showError('Неверный логин или пароль');
+                    showError(data.error || 'Ошибка входа');
                     
                     // Разблокировка кнопки
                     loginBtn.disabled = false;
@@ -269,7 +278,17 @@
                     // Очистка полей
                     document.getElementById('password').value = '';
                 }
-            }, 1000);
+            } catch (error) {
+                console.error('Ошибка входа:', error);
+                showError('Ошибка подключения к серверу');
+                
+                // Разблокировка кнопки
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Войти';
+                
+                // Очистка полей
+                document.getElementById('password').value = '';
+            }
         });
         
         // Проверка при загрузке страницы
