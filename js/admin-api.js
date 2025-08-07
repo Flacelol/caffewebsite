@@ -127,16 +127,15 @@ function setupRealtimeListener() {
     console.log('Realtime listener setup (placeholder)');
 }
 
-// Вызывайте при загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
-    setupRealtimeListener();
-});
+function setupRealtimeListener() {
+    // Пока что пустая функция, так как Firebase не используется
+    console.log('Realtime listener setup (placeholder)');
+}
 
-
-    async getCategories() {
-        return ['Coffee', 'Tea', 'Pastries', 'Cold Drinks'];
-    }
-};
+// Функция для получения категорий
+function getCategories() {
+    return ['Coffee', 'Tea', 'Pastries', 'Cold Drinks'];
+}
 
 // Уведомления
 function showNotification(message, type = 'success') {
